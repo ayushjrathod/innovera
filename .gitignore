@@ -1,4 +1,3 @@
 node_modules
-api/cert.crt
 api/cert.pem
 api/key.pem
