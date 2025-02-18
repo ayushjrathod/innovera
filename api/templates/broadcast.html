@@ -2,49 +2,41 @@
 <html>
   <head>
     <title>Broadcast</title>
-    <style>
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      #localVideo {
-        width: 100%;
-        max-width: 640px;
-      }
-      #roomInput {
-        padding: 5px;
-        margin-right: 10px;
-      }
-      #startButton {
-        padding: 5px 10px;
-      }
-      #status {
-        margin-top: 10px;
-        color: #666;
-      }
-    </style>
+    <link rel="stylesheet" href="../styles/broadcast.css" />
   </head>
   <body>
     <div class="container">
-      <h1>Broadcast</h1>
-      <div>
+      <h1>Join the Exibition</h1>
+      <p>Provide the Room Id and join in</p>
+      <div class="controls">
         <input type="text" id="roomInput" placeholder="Enter Room ID" />
+        <div class="share-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="screenShare" />
+            <span class="checkbox-text">Share Screen Also</span>
+          </label>
+        </div>
         <button id="startButton">Start Broadcasting</button>
       </div>
-      <div id="status"></div>
-      <video id="localVideo" autoplay playsinline muted></video>
+      <div id="status">🔴 Offline - Enter a Room ID to begin broadcasting</div>
+      <div class="video-grid">
+        <video id="localVideo" autoplay playsinline m></video>
+        <video id="screenVideo" autoplay playsinline></video>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
       const socket = io();
       const localVideo = document.getElementById("localVideo");
+      const screenVideo = document.getElementById("screenVideo");
       const startButton = document.getElementById("startButton");
       const roomInput = document.getElementById("roomInput");
       const statusDiv = document.getElementById("status");
+      const screenShare = document.getElementById("screenShare");
 
       let localStream;
+      let screenStream;
       let peerConnections = {};
 
       const configuration = {
@@ -70,18 +62,64 @@
         }
 
         try {
+          // Get camera stream
           localStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true,
           });
           localVideo.srcObject = localStream;
+
+          // Get screen share if checkbox is checked
+          if (screenShare.checked) {
+            try {
+              screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: true,
+                audio: true,
+              });
+              screenVideo.srcObject = screenStream;
+              screenVideo.style.display = "block";
+
+              screenStream.getVideoTracks()[0].onended = () => {
+                screenVideo.style.display = "none";
+                screenStream = null;
+                screenShare.checked = false;
+                updatePeerConnections();
+              };
+            } catch (error) {
+              console.error("Screen share error:", error);
+              screenShare.checked = false;
+            }
+          }
+
           socket.emit("create", { room: roomId });
           updateStatus("Starting broadcast...");
           startButton.disabled = true;
+          updatePeerConnections();
         } catch (error) {
           updateStatus("Error accessing media devices: " + error.message);
         }
       });
+
+      function updatePeerConnections() {
+        Object.values(peerConnections).forEach((pc) => {
+          // Remove all existing tracks
+          pc.getSenders().forEach((sender) => pc.removeTrack(sender));
+
+          // Add camera tracks
+          if (localStream) {
+            localStream.getTracks().forEach((track) => {
+              pc.addTrack(track, localStream);
+            });
+          }
+
+          // Add screen tracks
+          if (screenStream) {
+            screenStream.getTracks().forEach((track) => {
+              pc.addTrack(track, screenStream);
+            });
+          }
+        });
+      }
 
       socket.on("viewer_joined", async (data) => {
         const viewerId = data.viewer_id;
@@ -91,10 +129,18 @@
         const peerConnection = new RTCPeerConnection(configuration);
         peerConnections[viewerId] = peerConnection;
 
-        // Add local tracks to the connection
-        localStream.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, localStream);
-        });
+        // Add both streams if available
+        if (localStream) {
+          localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+          });
+        }
+
+        if (screenStream) {
+          screenStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, screenStream);
+          });
+        }
 
         // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
@@ -162,6 +208,9 @@
         Object.values(peerConnections).forEach((pc) => pc.close());
         if (localStream) {
           localStream.getTracks().forEach((track) => track.stop());
+        }
+        if (screenStream) {
+          screenStream.getTracks().forEach((track) => track.stop());
         }
       };
     </script>
