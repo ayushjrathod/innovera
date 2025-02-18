@@ -1,173 +1,169 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Broadcast</title>
     <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #localVideo {
-            width: 100%;
-            max-width: 640px;
-        }
-        #roomInput {
-            padding: 5px;
-            margin-right: 10px;
-        }
-        #startButton {
-            padding: 5px 10px;
-        }
-        #status {
-            margin-top: 10px;
-            color: #666;
-        }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #localVideo {
+        width: 100%;
+        max-width: 640px;
+      }
+      #roomInput {
+        padding: 5px;
+        margin-right: 10px;
+      }
+      #startButton {
+        padding: 5px 10px;
+      }
+      #status {
+        margin-top: 10px;
+        color: #666;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Broadcast</h1>
-        <div>
-            <input type="text" id="roomInput" placeholder="Enter Room ID">
-            <button id="startButton">Start Broadcasting</button>
-        </div>
-        <div id="status"></div>
-        <video id="localVideo" autoplay playsinline muted></video>
+      <h1>Broadcast</h1>
+      <div>
+        <input type="text" id="roomInput" placeholder="Enter Room ID" />
+        <button id="startButton">Start Broadcasting</button>
+      </div>
+      <div id="status"></div>
+      <video id="localVideo" autoplay playsinline muted></video>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        const socket = io();
-        const localVideo = document.getElementById('localVideo');
-        const startButton = document.getElementById('startButton');
-        const roomInput = document.getElementById('roomInput');
-        const statusDiv = document.getElementById('status');
-        
-        let localStream;
-        let peerConnections = {};
+      const socket = io();
+      const localVideo = document.getElementById("localVideo");
+      const startButton = document.getElementById("startButton");
+      const roomInput = document.getElementById("roomInput");
+      const statusDiv = document.getElementById("status");
 
-        const configuration = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' }
-            ]
-        };
+      let localStream;
+      let peerConnections = {};
 
-        function updateStatus(message) {
-            statusDiv.textContent = message;
-            console.log(message);
+      const configuration = {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
+          { urls: "stun:stun3.l.google.com:19302" },
+          { urls: "stun:stun4.l.google.com:19302" },
+        ],
+      };
+
+      function updateStatus(message) {
+        statusDiv.textContent = message;
+        console.log(message);
+      }
+
+      startButton.addEventListener("click", async () => {
+        const roomId = roomInput.value.trim();
+        if (!roomId) {
+          updateStatus("Please enter a room ID");
+          return;
         }
 
-        startButton.addEventListener('click', async () => {
-            const roomId = roomInput.value.trim();
-            if (!roomId) {
-                updateStatus('Please enter a room ID');
-                return;
-            }
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+          localVideo.srcObject = localStream;
+          socket.emit("create", { room: roomId });
+          updateStatus("Starting broadcast...");
+          startButton.disabled = true;
+        } catch (error) {
+          updateStatus("Error accessing media devices: " + error.message);
+        }
+      });
 
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: true, 
-                    audio: true 
-                });
-                localVideo.srcObject = localStream;
-                socket.emit('create', { room: roomId });
-                updateStatus('Starting broadcast...');
-                startButton.disabled = true;
-            } catch (error) {
-                updateStatus('Error accessing media devices: ' + error.message);
-            }
+      socket.on("viewer_joined", async (data) => {
+        const viewerId = data.viewer_id;
+        updateStatus("Viewer joined: " + viewerId);
+
+        // Create new peer connection for this viewer
+        const peerConnection = new RTCPeerConnection(configuration);
+        peerConnections[viewerId] = peerConnection;
+
+        // Add local tracks to the connection
+        localStream.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, localStream);
         });
 
-        socket.on('viewer_joined', async (data) => {
-            const viewerId = data.viewer_id;
-            updateStatus('Viewer joined: ' + viewerId);
-
-            // Create new peer connection for this viewer
-            const peerConnection = new RTCPeerConnection(configuration);
-            peerConnections[viewerId] = peerConnection;
-
-            // Add local tracks to the connection
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("ice_candidate", {
+              room: roomInput.value,
+              candidate: event.candidate,
+              viewer_id: viewerId,
             });
-
-            // Handle ICE candidates
-            peerConnection.onicecandidate = event => {
-                if (event.candidate) {
-                    socket.emit('ice_candidate', {
-                        room: roomInput.value,
-                        candidate: event.candidate,
-                        viewer_id: viewerId
-                    });
-                }
-            };
-
-            // Create and send offer
-            try {
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-                socket.emit('offer', {
-                    room: roomInput.value,
-                    offer: offer,
-                    viewer_id: viewerId
-                });
-            } catch (error) {
-                updateStatus('Error creating offer: ' + error.message);
-            }
-        });
-
-        socket.on('answer', async (data) => {
-            const viewerId = data.viewer_id;
-            const peerConnection = peerConnections[viewerId];
-            
-            if (peerConnection) {
-                try {
-                    await peerConnection.setRemoteDescription(
-                        new RTCSessionDescription(data.answer)
-                    );
-                    updateStatus('Established connection with viewer: ' + viewerId);
-                } catch (error) {
-                    updateStatus('Error setting remote description: ' + error.message);
-                }
-            }
-        });
-
-        socket.on('ice_candidate', async (data) => {
-            const viewerId = data.viewer_id;
-            const peerConnection = peerConnections[viewerId];
-            
-            if (peerConnection) {
-                try {
-                    await peerConnection.addIceCandidate(
-                        new RTCIceCandidate(data.candidate)
-                    );
-                } catch (error) {
-                    updateStatus('Error adding ICE candidate: ' + error.message);
-                }
-            }
-        });
-
-        socket.on('connect', () => {
-            updateStatus('Connected to server');
-        });
-
-        socket.on('connect_error', (error) => {
-            updateStatus('Connection error: ' + error.message);
-        });
-
-        // Cleanup when broadcaster leaves
-        window.onbeforeunload = () => {
-            socket.close();
-            Object.values(peerConnections).forEach(pc => pc.close());
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
+          }
         };
+
+        // Create and send offer
+        try {
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          socket.emit("offer", {
+            room: roomInput.value,
+            offer: offer,
+            viewer_id: viewerId,
+          });
+        } catch (error) {
+          updateStatus("Error creating offer: " + error.message);
+        }
+      });
+
+      socket.on("answer", async (data) => {
+        const viewerId = data.viewer_id;
+        const peerConnection = peerConnections[viewerId];
+
+        if (peerConnection) {
+          try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            updateStatus("Established connection with viewer: " + viewerId);
+          } catch (error) {
+            updateStatus("Error setting remote description: " + error.message);
+          }
+        }
+      });
+
+      socket.on("ice_candidate", async (data) => {
+        const viewerId = data.viewer_id;
+        const peerConnection = peerConnections[viewerId];
+
+        if (peerConnection) {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+          } catch (error) {
+            updateStatus("Error adding ICE candidate: " + error.message);
+          }
+        }
+      });
+
+      socket.on("connect", () => {
+        updateStatus("Connected to server");
+      });
+
+      socket.on("connect_error", (error) => {
+        updateStatus("Connection error: " + error.message);
+      });
+
+      // Cleanup when broadcaster leaves
+      window.onbeforeunload = () => {
+        socket.close();
+        Object.values(peerConnections).forEach((pc) => pc.close());
+        if (localStream) {
+          localStream.getTracks().forEach((track) => track.stop());
+        }
+      };
     </script>
-</body>
+  </body>
 </html>
