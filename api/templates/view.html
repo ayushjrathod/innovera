@@ -8,7 +8,12 @@
         margin: 0 auto;
         padding: 20px;
       }
-      #remoteVideo {
+      .video-grid {
+        display: flex;
+        gap: 10px;
+      }
+      #remoteVideo,
+      #remoteScreenVideo {
         width: 100%;
         max-width: 640px;
       }
@@ -33,13 +38,17 @@
         <button id="joinButton">Join</button>
       </div>
       <div id="status"></div>
-      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="video-grid">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <video id="remoteScreenVideo" autoplay playsinline></video>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
       const socket = io();
       const remoteVideo = document.getElementById("remoteVideo");
+      const remoteScreenVideo = document.getElementById("remoteScreenVideo");
       const joinButton = document.getElementById("joinButton");
       const roomInput = document.getElementById("roomInput");
       const statusDiv = document.getElementById("status");
@@ -77,7 +86,20 @@
 
         peerConnection.ontrack = (event) => {
           updateStatus("Received media stream");
-          remoteVideo.srcObject = event.streams[0];
+          const stream = event.streams[0];
+          const track = event.track;
+
+          // Determine if this is screen share or camera based on track kind and ID
+          if (track.kind === "video") {
+            if (!remoteVideo.srcObject || remoteVideo.srcObject.id !== stream.id) {
+              if (!remoteVideo.srcObject) {
+                remoteVideo.srcObject = stream;
+              } else if (!remoteScreenVideo.srcObject) {
+                remoteScreenVideo.srcObject = stream;
+                remoteScreenVideo.style.display = "block";
+              }
+            }
+          }
         };
 
         peerConnection.onconnectionstatechange = (event) => {
