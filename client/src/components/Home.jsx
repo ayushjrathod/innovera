@@ -1,5 +1,3 @@
-"use client";
-
 import { ArrowRight, BarChart, Globe, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -30,7 +28,7 @@ const Home = () => {
       >
         <div className="flex items-center space-x-6">
           <Link to="/" className={`text-2xl font-bold ${isScrolled ? "text-black" : "text-white"}`}>
-            Logo
+            Devrishis
           </Link>
           <div className="hidden md:flex space-x-6">
             <NavLink to="/" isScrolled={isScrolled}>
