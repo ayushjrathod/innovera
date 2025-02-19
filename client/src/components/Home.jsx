@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, BarChart, Globe, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -23,18 +24,24 @@ const Home = () => {
     <div className="bg-gray-50 text-gray-900">
       {/* Navigation Bar */}
       <nav
-        className={`fixed top-0 w-full py-4 px-8 flex justify-between items-center z-50 transition-all duration-300 ${
-          isScrolled ? "bg-white shadow-md" : "bg-transparent"
+        className={`fixed top-0 w-full py-4 px-8 flex justify-between items-center z-50 transition-all duration-300 backdrop-blur-sm ${
+          isScrolled ? "bg-white shadow-md" : "bg-black/20"
         }`}
       >
         <div className="flex items-center space-x-6">
-          <Link to="/" className="text-2xl font-bold text-white">
+          <Link to="/" className={`text-2xl font-bold ${isScrolled ? "text-black" : "text-white"}`}>
             Logo
           </Link>
           <div className="hidden md:flex space-x-6">
-            <NavLink to="/">Home</NavLink>
-            <NavLink to="/about">About</NavLink>
-            <NavLink to="/usecase">Use Cases</NavLink>
+            <NavLink to="/" isScrolled={isScrolled}>
+              Home
+            </NavLink>
+            <NavLink to="/about" isScrolled={isScrolled}>
+              About
+            </NavLink>
+            <NavLink to="/usecase" isScrolled={isScrolled}>
+              Use Cases
+            </NavLink>
           </div>
         </div>
         <div className="hidden md:block">
@@ -99,14 +106,13 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
         <img src="/assets/hero.avif" alt="Background" className="absolute w-full h-full object-cover" />
-        <div className="relative flex flex-col z-10 text-center p-4">
-          <h1 className="text-5xl backdrop-blur-sm rounded-xl p-4 md:text-6xl font-bold text-white mb-3 leading-tight">
+        <div className="backdrop-blur-[4px] bg-black/10 relative z-10 text-center p-4 bg-opacity-50 rounded-xl">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-3 leading-tight drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
             Welcome to Our Virtual Platform
           </h1>
-          <p className="text-2xl backdrop-blur-lg rounded-xl font-semibold md:text-2xl text-white mb-4">
+          <p className="text-2xl md:text-2xl font-semibold text-white mb-4 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
             Explore immersive and interactive experiences that transform industries.
           </p>
-
           <div className="flex max-w-full justify-center">
             <button
               onClick={() => (window.location.href = "https://192.168.205.88:5000/broadcast")}
@@ -118,91 +124,48 @@ const Home = () => {
         </div>
       </section>
       {/* Virtual Exhibitions Section */}
-      <section className="max-w-6xl mx-auto flex flex-col md:flex-row items-center py-20 px-6 space-y-12 md:space-y-0 md:space-x-12">
-        <div className="md:w-1/2 text-center md:text-left">
-          <h2
-            className="text-4xl md:text-5xl font-extrabold mb-6"
-            style={{
-              background: "linear-gradient(to right, #3B82F6, #10B981)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Transforming Experiences with Virtual Exhibitions
+      <section className="py-20 bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-8 text-center leading-snug">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-500">
+              Transforming Experiences with Virtual Exhibitions
+            </span>
           </h2>
-          <p className="text-lg text-gray-700 leading-relaxed mb-8">
-            Virtual exhibitions revolutionize industries by providing immersive, interactive, and globally accessible
-            experiences. Businesses can showcase products at trade shows, startups can pitch ideas to investors, and
-            artists can display their work in virtual galleries.
-          </p>
-          <button className="group inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-blue-700 transition-colors duration-300">
-            Learn More
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                clipRule="evenodd"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <FeatureCard
+                icon={<Globe className="w-8 h-8 text-blue-500" />}
+                title="Global Accessibility"
+                description="Reach audiences worldwide, breaking geographical barriers and expanding your market reach."
               />
-            </svg>
-          </button>
-        </div>
-        <div className="md:w-1/2">
-          <img
-            src="/assets/about1.jpeg"
-            alt="Virtual Exhibition"
-            className="rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-      </section>
-      {/* Beyond Transcripts Section */}
-      <section className="bg-gray-100 py-20">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center px-6 space-y-12 md:space-y-0 md:space-x-12">
-          <div className="md:w-1/2 text-center md:text-left">
-            <h2
-              className="text-4xl md:text-5xl font-extrabold mb-6"
-              style={{
-                background: "linear-gradient(to right, #10B981, #3B82F6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Beyond Transcripts
-            </h2>
-            <p className="text-lg text-gray-700 leading-relaxed mb-8">
-              Your meetings get transcribed with great summaries and notes, but we also analyze transcripts across your
-              teams to suggest follow-on meetings, highlight misunderstandings, and add to a shared knowledge
-              repository.
-            </p>
-            <button className="group inline-flex items-center bg-green-500 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-green-600 transition-colors duration-300">
-              Explore Features
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <FeatureCard
+                icon={<Zap className="w-8 h-8 text-yellow-500" />}
+                title="Interactive Experiences"
+                description="Engage visitors with immersive 3D environments, real-time interactions, and personalized journeys."
+              />
+              <FeatureCard
+                icon={<BarChart className="w-8 h-8 text-green-500" />}
+                title="Data-Driven Insights"
+                description="Gain valuable analytics on visitor behavior, preferences, and engagement to optimize your exhibitions."
+              />
+            </div>
+            <div className="relative">
+              <img src="/assets/about1.jpeg" alt="Virtual Exhibition" className="rounded-lg shadow-2xl" />
+              <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-xl">
+                <p className="text-2xl font-bold text-gray-800 leading-loose">200+</p>
+                <p className="text-sm text-gray-600 leading-relaxed">Successful Exhibitions</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-16 text-center">
+            <button className="group inline-flex items-center bg-gradient-to-r from-blue-600 to-teal-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-blue-700 hover:to-teal-600 transition-all duration-300 transform hover:scale-105">
+              Explore Virtual Exhibitions
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
-          <div className="md:w-1/2">
-            <img
-              src="/assets/about2.jpg"
-              alt="Beyond Transcripts"
-              className="rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
-            />
-          </div>
         </div>
       </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-6xl mx-auto px-6">
@@ -264,7 +227,7 @@ const Home = () => {
             </div>
           </div>
           <div className="mt-12 text-center">
-            <p>&copy; {new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Team Devrishis.</p>
           </div>
         </div>
       </footer>
@@ -272,10 +235,26 @@ const Home = () => {
   );
 };
 
-const NavLink = ({ to, children, ...props }) => (
-  <Link to={to} className="text-white font-semibold hover:text-gray-300 transition-colors duration-300" {...props}>
+const NavLink = ({ to, children, isScrolled, ...props }) => (
+  <Link
+    to={to}
+    className={`font-semibold transition-colors duration-300 ${
+      isScrolled ? "text-black hover:text-gray-600" : "text-white hover:text-gray-300"
+    }`}
+    {...props}
+  >
     {children}
   </Link>
+);
+
+const FeatureCard = ({ icon, title, description }) => (
+  <div className="flex items-start space-x-4 p-6 bg-white rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105">
+    <div className="flex-shrink-0">{icon}</div>
+    <div>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-gray-600">{description}</p>
+    </div>
+  </div>
 );
 
 export default Home;
