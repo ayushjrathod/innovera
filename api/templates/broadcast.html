@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Broadcast</title>
-    <link rel="stylesheet" href="../styles/broadcast.css" />
+    <title>Broadcast - Innovation Exhibition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../static/css/broadcast.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/broadcast.css') }}" />
   </head>
   <body>
     <div class="container">
-      <h1>Join the Exibition</h1>
-      <p>Provide the Room Id and join in</p>
+      <h1>Start Exhibition</h1>
+      <p>Share your innovations with the world</p>
       <div class="controls">
-        <input type="text" id="roomInput" placeholder="Enter Room ID" />
+        <input type="text" id="roomInput" placeholder="Enter your exhibition room ID" />
         <div class="share-options">
           <label class="checkbox-label">
             <input type="checkbox" id="screenShare" />
-            <span class="checkbox-text">Share Screen Also</span>
+            <span class="checkbox-text">Share presentation screen</span>
           </label>
         </div>
-        <button id="startButton">Start Broadcasting</button>
+        <button id="startButton">Start Exhibition</button>
       </div>
-      <div id="status">🔴 Offline - Enter a Room ID to begin broadcasting</div>
+      <div id="status">🔴 Waiting to start - Enter your room ID to begin</div>
       <div class="video-grid">
-        <video id="localVideo" autoplay playsinline m></video>
+        <video id="localVideo" autoplay playsinline></video>
         <video id="screenVideo" autoplay playsinline></video>
       </div>
     </div>
