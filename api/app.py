@@ -1,5 +1,8 @@
+from gevent import monkey
+monkey.patch_all()
+
 import ipaddress
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import socket
 import netifaces
@@ -11,8 +14,6 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from gevent import monkey
-monkey.patch_all()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ptrick'
@@ -244,4 +245,3 @@ if __name__ == '__main__':
         
     except Exception as e:
         print(f"\nError starting server: {str(e)}")
-
